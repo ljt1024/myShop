@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { nextId, store } from '../models/store.js';
+import { paginate } from './catalogService.js';
 import { clearSelectedCart, listCart } from './cartService.js';
 import { calculateCouponDiscount, markCouponUsed, pickUsableCoupon } from './engagementService.js';
 
@@ -179,9 +180,23 @@ export function cancelOrder(userId, id) {
 }
 
 export function adminListOrders(query = {}) {
-  const { status } = query;
-  const items = status ? store.orders.filter((order) => order.status === Number(status)) : store.orders;
-  return items.sort((a, b) => b.id - a.id).map(serializeOrder);
+  const { status, orderNo = '', receiver = '', page, pageSize } = query;
+  let items = status ? store.orders.filter((order) => order.status === Number(status)) : store.orders;
+  const normalizedOrderNo = String(orderNo).trim().toLowerCase();
+  const normalizedReceiver = String(receiver).trim().toLowerCase();
+
+  if (normalizedOrderNo) {
+    items = items.filter((order) => order.orderNo.toLowerCase().includes(normalizedOrderNo));
+  }
+
+  if (normalizedReceiver) {
+    items = items.filter((order) => {
+      const address = store.addresses.find((item) => item.id === order.addressId);
+      return address?.receiver?.toLowerCase().includes(normalizedReceiver);
+    });
+  }
+
+  return paginate(items.sort((a, b) => b.id - a.id).map(serializeOrder), page, pageSize || 10);
 }
 
 export function shipOrder(id, payload = {}) {

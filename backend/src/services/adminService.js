@@ -1,5 +1,5 @@
 import { nextId, store } from '../models/store.js';
-import { getProduct } from './catalogService.js';
+import { getProduct, paginate } from './catalogService.js';
 
 export function createProduct(payload) {
   const product = {
@@ -74,8 +74,93 @@ export function deleteProduct(id) {
   return true;
 }
 
-export function listUsers() {
-  return store.users.map(({ password, ...user }) => user);
+export function listCategories(query = {}) {
+  const { keyword = '', showStatus = '', page, pageSize } = query;
+  const normalizedKeyword = String(keyword).trim().toLowerCase();
+  let items = [...store.categories].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  if (normalizedKeyword) {
+    items = items.filter((item) => item.name.toLowerCase().includes(normalizedKeyword));
+  }
+
+  if (showStatus !== '') {
+    items = items.filter((item) => item.isShow === Number(showStatus));
+  }
+
+  return paginate(items, page, pageSize || 10);
+}
+
+export function createCategory(payload) {
+  if (!payload.name) {
+    const err = new Error('分类名称不能为空');
+    err.status = 400;
+    throw err;
+  }
+
+  const category = {
+    id: nextId(store.categories),
+    parentId: Number(payload.parentId || 0),
+    name: payload.name,
+    icon: payload.icon || 'Package',
+    sortOrder: Number(payload.sortOrder || store.categories.length + 1),
+    isShow: payload.isShow === undefined ? 1 : Number(payload.isShow)
+  };
+  store.categories.push(category);
+  return category;
+}
+
+export function updateCategory(id, payload) {
+  const category = store.categories.find((item) => item.id === Number(id));
+  if (!category) {
+    const err = new Error('分类不存在');
+    err.status = 404;
+    throw err;
+  }
+
+  Object.assign(category, {
+    ...payload,
+    id: category.id,
+    parentId: payload.parentId === undefined ? category.parentId : Number(payload.parentId),
+    sortOrder: payload.sortOrder === undefined ? category.sortOrder : Number(payload.sortOrder),
+    isShow: payload.isShow === undefined ? category.isShow : Number(payload.isShow)
+  });
+  return category;
+}
+
+export function deleteCategory(id) {
+  const categoryId = Number(id);
+  if (store.products.some((product) => product.categoryId === categoryId)) {
+    const err = new Error('该分类下存在商品，不能删除');
+    err.status = 400;
+    throw err;
+  }
+
+  const index = store.categories.findIndex((item) => item.id === categoryId);
+  if (index === -1) {
+    const err = new Error('分类不存在');
+    err.status = 404;
+    throw err;
+  }
+  store.categories.splice(index, 1);
+  return true;
+}
+
+export function listUsers(query = {}) {
+  const { keyword = '', status = '', page, pageSize } = query;
+  const normalizedKeyword = String(keyword).trim().toLowerCase();
+  let items = store.users.map(({ password, ...user }) => user);
+
+  if (normalizedKeyword) {
+    items = items.filter((user) => {
+      return `${user.username} ${user.nickname} ${user.phone} ${user.email}`.toLowerCase().includes(normalizedKeyword);
+    });
+  }
+
+  if (status !== '') {
+    items = items.filter((user) => user.status === Number(status));
+  }
+
+  return paginate(items, page, pageSize || 10);
 }
 
 export function listRoles() {
@@ -155,6 +240,59 @@ export function listAdmins() {
       permissions: role?.permissions || []
     };
   });
+}
+
+export function listAdminReviews(query = {}) {
+  const { keyword = '', rating = '', replyStatus = '', page, pageSize } = query;
+  const normalizedKeyword = String(keyword).trim().toLowerCase();
+  let items = store.reviews.map((review) => {
+    const product = getProduct(review.productId);
+    const user = store.users.find((item) => item.id === review.userId);
+    return {
+      ...review,
+      productName: product?.name || '未知商品',
+      userName: review.isAnonymous ? '匿名用户' : user?.nickname || user?.username || '商城用户'
+    };
+  });
+
+  if (normalizedKeyword) {
+    items = items.filter((review) => {
+      return `${review.productName} ${review.userName} ${review.content}`.toLowerCase().includes(normalizedKeyword);
+    });
+  }
+
+  if (rating !== '') {
+    items = items.filter((review) => review.rating === Number(rating));
+  }
+
+  if (replyStatus !== '') {
+    items = items.filter((review) => (replyStatus === 'replied' ? Boolean(review.reply) : !review.reply));
+  }
+
+  return paginate(items.sort((a, b) => b.id - a.id), page, pageSize || 10);
+}
+
+export function replyReview(id, payload = {}) {
+  const review = store.reviews.find((item) => item.id === Number(id));
+  if (!review) {
+    const err = new Error('评价不存在');
+    err.status = 404;
+    throw err;
+  }
+  review.reply = payload.reply || '';
+  review.replyAt = review.reply ? new Date().toISOString() : null;
+  return review;
+}
+
+export function deleteReview(id) {
+  const index = store.reviews.findIndex((item) => item.id === Number(id));
+  if (index === -1) {
+    const err = new Error('评价不存在');
+    err.status = 404;
+    throw err;
+  }
+  store.reviews.splice(index, 1);
+  return true;
 }
 
 export function createAdmin(payload) {

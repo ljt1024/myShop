@@ -1,7 +1,16 @@
 <template>
   <section class="admin-card">
     <div class="card-head">
-      <el-input v-model="keyword" placeholder="搜索商品名称" clearable @keyup.enter="fetchProducts" />
+      <div class="filter-row">
+        <el-input v-model="filters.keyword" placeholder="搜索商品名称" clearable @keyup.enter="fetchProducts" />
+        <el-select v-model="filters.categoryId" clearable placeholder="分类" @change="fetchProducts">
+          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+        </el-select>
+        <el-select v-model="filters.saleStatus" clearable placeholder="上下架" @change="fetchProducts">
+          <el-option label="上架" :value="1" />
+          <el-option label="下架" :value="0" />
+        </el-select>
+      </div>
       <div class="card-actions">
         <el-button @click="fetchProducts">查询</el-button>
         <el-button type="primary" :disabled="!auth.canWrite" @click="openEditor()">新增商品</el-button>
@@ -42,6 +51,17 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="pager-row">
+      <el-pagination
+        v-model:current-page="filters.page"
+        v-model:page-size="filters.pageSize"
+        layout="total, sizes, prev, pager, next"
+        :total="pagination.total"
+        :page-sizes="[10, 20, 50]"
+        @current-change="fetchProducts"
+        @size-change="fetchProducts"
+      />
+    </div>
   </section>
 
   <el-drawer v-model="drawer" :title="form.id ? '编辑商品' : '新增商品'" size="520px">
@@ -100,8 +120,10 @@ import { useAdminAuthStore } from '../../stores/auth';
 
 const auth = useAdminAuthStore();
 const products = ref([]);
-const keyword = ref('');
+const categories = ref([]);
+const pagination = ref({ total: 0 });
 const drawer = ref(false);
+const filters = reactive({ keyword: '', categoryId: '', saleStatus: '', page: 1, pageSize: 10 });
 const form = reactive({
   id: '',
   name: '',
@@ -118,8 +140,14 @@ const form = reactive({
 });
 
 async function fetchProducts() {
-  const res = await adminApi.products({ keyword: keyword.value, pageSize: 50 });
+  const res = await adminApi.products(filters);
   products.value = res.data.list;
+  pagination.value = res.data.pagination;
+}
+
+async function fetchCategories() {
+  const res = await adminApi.categories({ pageSize: 100 });
+  categories.value = res.data.list;
 }
 
 function openEditor(row = null) {
@@ -165,5 +193,7 @@ async function remove(id) {
   await fetchProducts();
 }
 
-onMounted(fetchProducts);
+onMounted(async () => {
+  await Promise.all([fetchCategories(), fetchProducts()]);
+});
 </script>

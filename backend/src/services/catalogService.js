@@ -1,6 +1,6 @@
 import { store } from '../models/store.js';
 
-function paginate(items, page = 1, pageSize = 12) {
+export function paginate(items, page = 1, pageSize = 12) {
   const current = Math.max(1, Number(page) || 1);
   const size = Math.max(1, Math.min(100, Number(pageSize) || 12));
   const start = (current - 1) * size;
@@ -79,6 +79,13 @@ export function getDashboardStats() {
   const totalSales = paidOrders.reduce((sum, order) => sum + order.payAmount, 0);
   const pendingShipment = store.orders.filter((order) => order.status === 20).length;
   const stockWarnings = store.products.filter((product) => product.stock < 40).length;
+  const statusMap = {
+    10: '待支付',
+    20: '待发货',
+    30: '待收货',
+    40: '已完成',
+    50: '已取消'
+  };
 
   return {
     orderCount: store.orders.length,
@@ -86,6 +93,47 @@ export function getDashboardStats() {
     userCount: store.users.length,
     pendingShipment,
     stockWarnings,
+    todayVisitors: 12840,
+    conversionRate: 6.8,
+    averageOrderValue: paidOrders.length ? Number((totalSales / paidOrders.length).toFixed(2)) : 0,
+    todoItems: [
+      { label: '待发货订单', value: pendingShipment, level: 'warning' },
+      { label: '库存预警商品', value: stockWarnings, level: 'danger' },
+      { label: '未回复评价', value: store.reviews.filter((review) => !review.reply).length, level: 'primary' },
+      { label: '待审核退款', value: 3, level: 'info' }
+    ],
+    orderFunnel: [
+      { label: '访问', value: 12840 },
+      { label: '加购', value: 1680 },
+      { label: '下单', value: Math.max(62, store.orders.length) },
+      { label: '支付', value: Math.max(48, paidOrders.length) }
+    ],
+    productRanking: [...store.products]
+      .sort((a, b) => b.soldCount - a.soldCount)
+      .slice(0, 5)
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        soldCount: product.soldCount,
+        stock: product.stock,
+        revenue: Number((product.soldCount * product.price).toFixed(2))
+      })),
+    stockWarningProducts: store.products
+      .filter((product) => product.stock < 60)
+      .sort((a, b) => a.stock - b.stock)
+      .slice(0, 5)
+      .map((product) => ({ id: product.id, name: product.name, stock: product.stock })),
+    recentOrders: [...store.orders]
+      .sort((a, b) => b.id - a.id)
+      .slice(0, 5)
+      .map((order) => ({
+        id: order.id,
+        orderNo: order.orderNo,
+        amount: order.payAmount,
+        status: order.status,
+        statusText: statusMap[order.status],
+        createdAt: order.createdAt
+      })),
     trend: [
       { day: '07-02', sales: 16800, orders: 43 },
       { day: '07-03', sales: 21400, orders: 58 },
@@ -99,10 +147,19 @@ export function getDashboardStats() {
 }
 
 export function adminListProducts(query = {}) {
-  const { keyword = '', page, pageSize } = query;
+  const { keyword = '', categoryId, saleStatus = '', page, pageSize } = query;
   const normalizedKeyword = String(keyword).trim().toLowerCase();
-  const items = normalizedKeyword
+  let items = normalizedKeyword
     ? store.products.filter((product) => `${product.name} ${product.subTitle}`.toLowerCase().includes(normalizedKeyword))
     : store.products;
+
+  if (categoryId) {
+    items = items.filter((product) => product.categoryId === Number(categoryId));
+  }
+
+  if (saleStatus !== '') {
+    items = items.filter((product) => product.isOnSale === Number(saleStatus));
+  }
+
   return paginate(items, page, pageSize);
 }

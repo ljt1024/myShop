@@ -1,13 +1,17 @@
 <template>
   <section class="admin-card">
     <div class="card-head">
-      <el-select v-model="status" clearable placeholder="订单状态" @change="fetchOrders">
-        <el-option label="待支付" :value="10" />
-        <el-option label="待发货" :value="20" />
-        <el-option label="待收货" :value="30" />
-        <el-option label="已完成" :value="40" />
-        <el-option label="已取消" :value="50" />
-      </el-select>
+      <div class="filter-row">
+        <el-input v-model="filters.orderNo" placeholder="订单号" clearable @keyup.enter="fetchOrders" />
+        <el-input v-model="filters.receiver" placeholder="收货人" clearable @keyup.enter="fetchOrders" />
+        <el-select v-model="filters.status" clearable placeholder="订单状态" @change="fetchOrders">
+          <el-option label="待支付" :value="10" />
+          <el-option label="待发货" :value="20" />
+          <el-option label="待收货" :value="30" />
+          <el-option label="已完成" :value="40" />
+          <el-option label="已取消" :value="50" />
+        </el-select>
+      </div>
       <el-button @click="fetchOrders">刷新</el-button>
     </div>
 
@@ -34,24 +38,37 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="pager-row">
+      <el-pagination
+        v-model:current-page="filters.page"
+        v-model:page-size="filters.pageSize"
+        layout="total, sizes, prev, pager, next"
+        :total="pagination.total"
+        :page-sizes="[10, 20, 50]"
+        @current-change="fetchOrders"
+        @size-change="fetchOrders"
+      />
+    </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { adminApi } from '../../api/admin';
 import { useAdminAuthStore } from '../../stores/auth';
 
 const auth = useAdminAuthStore();
 const orders = ref([]);
-const status = ref('');
+const pagination = ref({ total: 0 });
+const filters = reactive({ orderNo: '', receiver: '', status: '', page: 1, pageSize: 10 });
 const statusMap = { 10: '待支付', 20: '待发货', 30: '待收货', 40: '已完成', 50: '已取消' };
 const tagType = { 10: 'warning', 20: 'primary', 30: 'success', 40: 'info', 50: 'danger' };
 
 async function fetchOrders() {
-  const res = await adminApi.orders({ status: status.value || undefined });
-  orders.value = res.data;
+  const res = await adminApi.orders(filters);
+  orders.value = res.data.list;
+  pagination.value = res.data.pagination;
 }
 
 async function ship(row) {

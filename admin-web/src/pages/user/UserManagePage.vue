@@ -1,5 +1,15 @@
 <template>
   <section class="admin-card">
+    <div class="card-head">
+      <div class="filter-row">
+        <el-input v-model="filters.keyword" placeholder="用户名 / 昵称 / 手机 / 邮箱" clearable @keyup.enter="fetchUsers" />
+        <el-select v-model="filters.status" clearable placeholder="状态" @change="fetchUsers">
+          <el-option label="正常" :value="1" />
+          <el-option label="禁用" :value="0" />
+        </el-select>
+        <el-button @click="fetchUsers">查询</el-button>
+      </div>
+    </div>
     <el-table :data="users" stripe>
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="nickname" label="昵称" />
@@ -16,20 +26,34 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="pager-row">
+      <el-pagination
+        v-model:current-page="filters.page"
+        v-model:page-size="filters.pageSize"
+        layout="total, sizes, prev, pager, next"
+        :total="pagination.total"
+        :page-sizes="[10, 20, 50]"
+        @current-change="fetchUsers"
+        @size-change="fetchUsers"
+      />
+    </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { adminApi } from '../../api/admin';
 import { useAdminAuthStore } from '../../stores/auth';
 
 const auth = useAdminAuthStore();
 const users = ref([]);
+const pagination = ref({ total: 0 });
+const filters = reactive({ keyword: '', status: '', page: 1, pageSize: 10 });
 
 async function fetchUsers() {
-  const res = await adminApi.users();
-  users.value = res.data;
+  const res = await adminApi.users(filters);
+  users.value = res.data.list;
+  pagination.value = res.data.pagination;
 }
 
 async function toggle(row) {

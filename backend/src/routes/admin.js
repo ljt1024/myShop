@@ -7,20 +7,27 @@ import {
   createCoupon,
   createBanner,
   createAdmin,
+  createCategory,
   createProduct,
   createRole,
   deleteAdmin,
   deleteBanner,
+  deleteCategory,
   deleteProduct,
+  deleteReview,
   deleteRole,
   listAdmins,
   listBanners,
+  listAdminReviews,
+  listCategories,
   listCoupons,
   listRoles,
   listUsers,
+  replyReview,
   toggleUserStatus,
   updateAdmin,
   updateBanner,
+  updateCategory,
   updateProduct,
   updateRole
 } from '../services/adminService.js';
@@ -45,6 +52,35 @@ adminRouter.get('/stats/overview', (req, res) => {
 adminRouter.get('/products', (req, res) => {
   const result = adminListProducts(req.query);
   res.json(page(result.list, result.pagination));
+});
+
+adminRouter.get('/categories', (req, res) => {
+  const result = listCategories(req.query);
+  res.json(page(result.list, result.pagination));
+});
+
+adminRouter.post('/categories', requirePermission('write'), (req, res, next) => {
+  try {
+    res.json(ok(createCategory(req.body), '分类已创建'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.put('/categories/:id', requirePermission('write'), (req, res, next) => {
+  try {
+    res.json(ok(updateCategory(req.params.id, req.body), '分类已更新'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete('/categories/:id', requirePermission('write'), (req, res, next) => {
+  try {
+    res.json(ok(deleteCategory(req.params.id), '分类已删除'));
+  } catch (err) {
+    next(err);
+  }
 });
 
 adminRouter.post('/products', requirePermission('write'), (req, res, next) => {
@@ -72,7 +108,8 @@ adminRouter.delete('/products/:id', requirePermission('write'), (req, res, next)
 });
 
 adminRouter.get('/orders', (req, res) => {
-  res.json(ok(adminListOrders(req.query)));
+  const result = adminListOrders(req.query);
+  res.json(page(result.list, result.pagination));
 });
 
 adminRouter.put('/orders/:id/ship', requirePermission('write'), (req, res, next) => {
@@ -84,7 +121,8 @@ adminRouter.put('/orders/:id/ship', requirePermission('write'), (req, res, next)
 });
 
 adminRouter.get('/users', (req, res) => {
-  res.json(ok(listUsers()));
+  const result = listUsers(req.query);
+  res.json(page(result.list, result.pagination));
 });
 
 adminRouter.put('/users/:id/status', requirePermission('write'), (req, res, next) => {
@@ -97,6 +135,27 @@ adminRouter.put('/users/:id/status', requirePermission('write'), (req, res, next
 
 adminRouter.get('/coupons', (req, res) => {
   res.json(ok(listCoupons()));
+});
+
+adminRouter.get('/reviews', (req, res) => {
+  const result = listAdminReviews(req.query);
+  res.json(page(result.list, result.pagination));
+});
+
+adminRouter.put('/reviews/:id/reply', requirePermission('write'), (req, res, next) => {
+  try {
+    res.json(ok(replyReview(req.params.id, req.body), '回复已保存'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete('/reviews/:id', requirePermission('write'), (req, res, next) => {
+  try {
+    res.json(ok(deleteReview(req.params.id), '评价已删除'));
+  } catch (err) {
+    next(err);
+  }
 });
 
 adminRouter.post('/coupons', requirePermission('write'), (req, res, next) => {
