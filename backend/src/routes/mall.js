@@ -12,12 +12,26 @@ import {
 import { addCartItem, listCart, removeCartItem, updateCartItem } from '../services/cartService.js';
 import {
   cancelOrder,
+  createAddress,
   createOrder,
+  deleteAddress,
   listAddresses,
   listOrders,
-  payOrder
+  payOrder,
+  updateAddress
 } from '../services/orderService.js';
-import { store } from '../models/store.js';
+import {
+  addFavorite,
+  createReview,
+  favoriteStatus,
+  listAvailableCoupons,
+  listFavorites,
+  listReviews,
+  listUserCoupons,
+  receiveCoupon,
+  removeFavorite,
+  removeFavoriteByProduct
+} from '../services/engagementService.js';
 
 export const mallRouter = express.Router();
 
@@ -87,6 +101,18 @@ mallRouter.get('/products/:id', (req, res, next) => {
   res.json(ok(product));
 });
 
+mallRouter.get('/products/:id/reviews', (req, res) => {
+  res.json(ok(listReviews(req.params.id)));
+});
+
+mallRouter.post('/products/:id/reviews', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(createReview(req.user.id, req.params.id, req.body), '评价已发布'));
+  } catch (err) {
+    next(err);
+  }
+});
+
 mallRouter.get('/cart', requireAuth, (req, res) => {
   res.json(ok(listCart(req.user.id)));
 });
@@ -119,6 +145,30 @@ mallRouter.get('/addresses', requireAuth, (req, res) => {
   res.json(ok(listAddresses(req.user.id)));
 });
 
+mallRouter.post('/addresses', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(createAddress(req.user.id, req.body), '地址已新增'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+mallRouter.put('/addresses/:id', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(updateAddress(req.user.id, req.params.id, req.body), '地址已更新'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+mallRouter.delete('/addresses/:id', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(deleteAddress(req.user.id, req.params.id), '地址已删除'));
+  } catch (err) {
+    next(err);
+  }
+});
+
 mallRouter.post('/orders', requireAuth, (req, res, next) => {
   try {
     res.json(ok(createOrder(req.user.id, req.body), '订单已创建'));
@@ -147,6 +197,46 @@ mallRouter.post('/orders/:id/pay', requireAuth, (req, res, next) => {
   }
 });
 
-mallRouter.get('/coupons', (req, res) => {
-  res.json(ok(store.coupons.filter((coupon) => coupon.status)));
+mallRouter.get('/favorites', requireAuth, (req, res) => {
+  res.json(ok(listFavorites(req.user.id)));
+});
+
+mallRouter.get('/favorites/status/:productId', requireAuth, (req, res) => {
+  res.json(ok({ favorited: favoriteStatus(req.user.id, req.params.productId) }));
+});
+
+mallRouter.post('/favorites', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(addFavorite(req.user.id, req.body.productId), '已收藏'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+mallRouter.delete('/favorites/:id', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(removeFavorite(req.user.id, req.params.id), '已取消收藏'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+mallRouter.delete('/favorites/product/:productId', requireAuth, (req, res) => {
+  res.json(ok(removeFavoriteByProduct(req.user.id, req.params.productId), '已取消收藏'));
+});
+
+mallRouter.get('/coupons', requireAuth, (req, res) => {
+  res.json(ok(listAvailableCoupons(req.user.id)));
+});
+
+mallRouter.get('/user-coupons', requireAuth, (req, res) => {
+  res.json(ok(listUserCoupons(req.user.id, req.query.status)));
+});
+
+mallRouter.post('/coupons/receive', requireAuth, (req, res, next) => {
+  try {
+    res.json(ok(receiveCoupon(req.user.id, req.body.couponId), '领取成功'));
+  } catch (err) {
+    next(err);
+  }
 });

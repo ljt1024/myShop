@@ -12,5 +12,9 @@ export const adminApi = {
   users: () => http.get('/users'),
   toggleUser: (id) => http.put(`/users/${id}/status`),
   coupons: () => http.get('/coupons'),
-  createCoupon: (payload) => http.post('/coupons', payload)
+  createCoupon: (payload) => http.post('/coupons', payload),
+  banners: () => http.get('/banners'),
+  createBanner: (payload) => http.post('/banners', payload),
+  updateBanner: (id, payload) => http.put(`/banners/${id}`, payload),
+  deleteBanner: (id) => http.delete(`/banners/${id}`)
 };

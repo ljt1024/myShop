@@ -40,6 +40,10 @@
       <div class="detail-actions">
         <button class="primary-btn" @click="addToCart">加入购物车</button>
         <button class="ghost-btn" @click="buyNow">立即购买</button>
+        <button class="ghost-btn" @click="toggleFavorite">
+          <Heart :size="18" :fill="favorited ? 'currentColor' : 'none'" />
+          {{ favorited ? '已收藏' : '收藏' }}
+        </button>
       </div>
 
       <div class="params">
@@ -55,11 +59,53 @@
       </div>
     </div>
   </section>
+
+  <section v-if="product" class="section review-section">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Reviews</span>
+        <h2>累计评价</h2>
+      </div>
+      <span>{{ reviews.length }} 条</span>
+    </div>
+
+    <form class="review-form" @submit.prevent="submitReview">
+      <div class="rating-picker">
+        <button
+          v-for="star in 5"
+          :key="star"
+          type="button"
+          :class="{ active: reviewForm.rating >= star }"
+          @click="reviewForm.rating = star"
+        >
+          ★
+        </button>
+      </div>
+      <input v-model="reviewForm.content" placeholder="写下这件商品的使用体验" />
+      <label class="inline-check">
+        <input v-model="reviewForm.isAnonymous" type="checkbox" />
+        匿名
+      </label>
+      <button class="primary-btn" type="submit">发布评价</button>
+    </form>
+
+    <div class="review-list">
+      <article v-for="review in reviews" :key="review.id" class="review-card">
+        <div>
+          <strong>{{ review.user.nickname }}</strong>
+          <span>{{ '★'.repeat(review.rating) }}</span>
+        </div>
+        <p>{{ review.content }}</p>
+        <small v-if="review.reply">商家回复：{{ review.reply }}</small>
+      </article>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { Heart } from 'lucide-vue-next';
 import { mallApi } from '../../api/mall';
 import { useAuthStore } from '../../stores/auth';
 import { useCartStore } from '../../stores/cart';
@@ -73,6 +119,9 @@ const product = ref(null);
 const activeImage = ref('');
 const selectedSku = ref(null);
 const quantity = ref(1);
+const reviews = ref([]);
+const favorited = ref(false);
+const reviewForm = reactive({ rating: 5, content: '', isAnonymous: false });
 
 async function ensureLogin() {
   if (!auth.isLoggedIn) {
@@ -90,10 +139,44 @@ async function buyNow() {
   router.push('/checkout');
 }
 
+async function fetchReviews() {
+  const res = await mallApi.reviews(route.params.id);
+  reviews.value = res.data;
+}
+
+async function fetchFavoriteStatus() {
+  if (!auth.isLoggedIn) return;
+  const res = await mallApi.favoriteStatus(route.params.id);
+  favorited.value = res.data.favorited;
+}
+
+async function toggleFavorite() {
+  await ensureLogin();
+  if (favorited.value) {
+    await mallApi.removeFavoriteByProduct(product.value.id);
+  } else {
+    await mallApi.addFavorite(product.value.id);
+  }
+  await fetchFavoriteStatus();
+}
+
+async function submitReview() {
+  await ensureLogin();
+  await mallApi.createReview(product.value.id, {
+    rating: reviewForm.rating,
+    content: reviewForm.content || '这件商品使用体验不错。',
+    skuId: selectedSku.value?.id,
+    isAnonymous: reviewForm.isAnonymous
+  });
+  Object.assign(reviewForm, { rating: 5, content: '', isAnonymous: false });
+  await fetchReviews();
+}
+
 onMounted(async () => {
   const res = await mallApi.product(route.params.id);
   product.value = res.data;
   activeImage.value = product.value.images[0];
   selectedSku.value = product.value.skus[0];
+  await Promise.all([fetchReviews(), fetchFavoriteStatus()]);
 });
 </script>

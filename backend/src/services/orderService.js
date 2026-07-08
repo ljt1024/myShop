@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { nextId, store } from '../models/store.js';
 import { clearSelectedCart, listCart } from './cartService.js';
+import { calculateCouponDiscount, markCouponUsed, pickUsableCoupon } from './engagementService.js';
 
 function serializeOrder(order) {
   return {
@@ -12,6 +13,70 @@ function serializeOrder(order) {
 
 export function listAddresses(userId) {
   return store.addresses.filter((address) => address.userId === Number(userId));
+}
+
+export function createAddress(userId, payload = {}) {
+  const required = ['receiver', 'phone', 'province', 'city', 'district', 'detail'];
+  const missing = required.find((key) => !payload[key]);
+  if (missing) {
+    const err = new Error('请填写完整收货地址');
+    err.status = 400;
+    throw err;
+  }
+
+  if (payload.isDefault) {
+    store.addresses.forEach((item) => {
+      if (item.userId === Number(userId)) item.isDefault = 0;
+    });
+  }
+
+  const address = {
+    id: nextId(store.addresses),
+    userId: Number(userId),
+    receiver: payload.receiver,
+    phone: payload.phone,
+    province: payload.province,
+    city: payload.city,
+    district: payload.district,
+    detail: payload.detail,
+    isDefault: payload.isDefault ? 1 : 0
+  };
+  store.addresses.unshift(address);
+  return address;
+}
+
+export function updateAddress(userId, id, payload = {}) {
+  const address = store.addresses.find((item) => item.id === Number(id) && item.userId === Number(userId));
+  if (!address) {
+    const err = new Error('地址不存在');
+    err.status = 404;
+    throw err;
+  }
+
+  if (payload.isDefault) {
+    store.addresses.forEach((item) => {
+      if (item.userId === Number(userId)) item.isDefault = 0;
+    });
+  }
+
+  Object.assign(address, {
+    ...payload,
+    id: address.id,
+    userId: address.userId,
+    isDefault: payload.isDefault === undefined ? address.isDefault : payload.isDefault ? 1 : 0
+  });
+  return address;
+}
+
+export function deleteAddress(userId, id) {
+  const index = store.addresses.findIndex((item) => item.id === Number(id) && item.userId === Number(userId));
+  if (index === -1) {
+    const err = new Error('地址不存在');
+    err.status = 404;
+    throw err;
+  }
+  store.addresses.splice(index, 1);
+  return true;
 }
 
 export function listOrders(userId, query = {}) {
@@ -49,7 +114,8 @@ export function createOrder(userId, payload = {}) {
 
   const totalAmount = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
   const freightAmount = selectedItems.reduce((sum, item) => sum + Number(item.product.freight || 0), 0);
-  const discountAmount = totalAmount >= 300 ? 40 : 0;
+  const pickedCoupon = pickUsableCoupon(userId, payload.userCouponId, totalAmount);
+  const discountAmount = pickedCoupon ? calculateCouponDiscount(pickedCoupon.coupon, totalAmount) : totalAmount >= 300 ? 40 : 0;
   const payAmount = Number(Math.max(0, totalAmount + freightAmount - discountAmount).toFixed(2));
   const order = {
     id: nextId(store.orders),
@@ -59,6 +125,7 @@ export function createOrder(userId, payload = {}) {
     totalAmount,
     freightAmount,
     discountAmount,
+    userCouponId: pickedCoupon?.userCoupon.id || null,
     payAmount,
     payMethod: payload.payMethod || 'mock',
     status: 10,
@@ -78,6 +145,7 @@ export function createOrder(userId, payload = {}) {
   };
 
   store.orders.push(order);
+  markCouponUsed(pickedCoupon?.userCoupon, order.id);
   clearSelectedCart(userId);
   return serializeOrder(order);
 }

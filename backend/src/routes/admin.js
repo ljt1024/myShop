@@ -5,11 +5,15 @@ import { adminLogin } from '../services/authService.js';
 import { adminListProducts, getDashboardStats } from '../services/catalogService.js';
 import {
   createCoupon,
+  createBanner,
   createProduct,
+  deleteBanner,
   deleteProduct,
+  listBanners,
   listCoupons,
   listUsers,
   toggleUserStatus,
+  updateBanner,
   updateProduct
 } from '../services/adminService.js';
 import { adminListOrders, shipOrder } from '../services/orderService.js';
@@ -90,6 +94,34 @@ adminRouter.get('/coupons', (req, res) => {
 adminRouter.post('/coupons', (req, res, next) => {
   try {
     res.json(ok(createCoupon(req.body), '优惠券已创建'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get('/banners', (req, res) => {
+  res.json(ok(listBanners()));
+});
+
+adminRouter.post('/banners', (req, res, next) => {
+  try {
+    res.json(ok(createBanner(req.body), 'Banner 已创建'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.put('/banners/:id', (req, res, next) => {
+  try {
+    res.json(ok(updateBanner(req.params.id, req.body), 'Banner 已更新'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete('/banners/:id', (req, res, next) => {
+  try {
+    res.json(ok(deleteBanner(req.params.id), 'Banner 已删除'));
   } catch (err) {
     next(err);
   }

@@ -206,6 +206,14 @@ a {
   color: var(--admin-muted);
 }
 
+.banner-thumb {
+  display: block;
+  width: 82px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

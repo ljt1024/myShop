@@ -113,3 +113,55 @@ export function createCoupon(payload) {
   store.coupons.unshift(coupon);
   return coupon;
 }
+
+export function listBanners() {
+  return [...store.banners].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export function createBanner(payload) {
+  const banner = {
+    id: nextId(store.banners),
+    title: payload.title,
+    image: payload.image,
+    type: payload.type || 'url',
+    targetId: String(payload.targetId || ''),
+    sortOrder: Number(payload.sortOrder || store.banners.length + 1),
+    isShow: payload.isShow === undefined ? 1 : Number(payload.isShow)
+  };
+
+  if (!banner.title || !banner.image) {
+    const err = new Error('Banner 标题和图片不能为空');
+    err.status = 400;
+    throw err;
+  }
+
+  store.banners.push(banner);
+  return banner;
+}
+
+export function updateBanner(id, payload) {
+  const banner = store.banners.find((item) => item.id === Number(id));
+  if (!banner) {
+    const err = new Error('Banner 不存在');
+    err.status = 404;
+    throw err;
+  }
+  Object.assign(banner, {
+    ...payload,
+    id: banner.id,
+    sortOrder: payload.sortOrder === undefined ? banner.sortOrder : Number(payload.sortOrder),
+    isShow: payload.isShow === undefined ? banner.isShow : Number(payload.isShow)
+  });
+  return banner;
+}
+
+export function deleteBanner(id) {
+  const index = store.banners.findIndex((item) => item.id === Number(id));
+  if (index === -1) {
+    const err = new Error('Banner 不存在');
+    err.status = 404;
+    throw err;
+  }
+  store.banners.splice(index, 1);
+  return true;
+}

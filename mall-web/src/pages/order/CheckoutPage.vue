@@ -27,6 +27,21 @@
           <strong>{{ money(item.subtotal) }}</strong>
         </article>
       </div>
+
+      <div class="panel">
+        <h2>优惠券</h2>
+        <label class="address-card">
+          <input v-model="userCouponId" type="radio" value="" />
+          <span><strong>不使用优惠券</strong><small>保留优惠券到下次订单</small></span>
+        </label>
+        <label v-for="item in usableCoupons" :key="item.id" class="address-card">
+          <input v-model="userCouponId" type="radio" :value="item.id" />
+          <span>
+            <strong>{{ item.coupon.name }}</strong>
+            <small>满 {{ money(item.coupon.minAmount) }} 可用</small>
+          </span>
+        </label>
+      </div>
     </div>
 
     <aside class="summary-panel">
@@ -54,13 +69,24 @@ const router = useRouter();
 const cart = useCartStore();
 const addresses = ref([]);
 const addressId = ref('');
+const userCoupons = ref([]);
+const userCouponId = ref('');
 const selectedItems = computed(() => cart.items.filter((item) => item.selected));
-const discount = computed(() => (cart.selectedAmount >= 300 ? 40 : 0));
+const selectedCoupon = computed(() => userCoupons.value.find((item) => item.id === Number(userCouponId.value)));
+const usableCoupons = computed(() => {
+  return userCoupons.value.filter((item) => item.status === 0 && cart.selectedAmount >= Number(item.coupon.minAmount || 0));
+});
+const discount = computed(() => {
+  const coupon = selectedCoupon.value?.coupon;
+  if (!coupon) return cart.selectedAmount >= 300 ? 40 : 0;
+  if (coupon.type === 2) return Number((cart.selectedAmount * (1 - Number(coupon.value))).toFixed(2));
+  return Math.min(Number(coupon.value || 0), cart.selectedAmount);
+});
 const freight = computed(() => selectedItems.value.reduce((sum, item) => sum + Number(item.product.freight || 0), 0));
 const payAmount = computed(() => cart.selectedAmount + freight.value - discount.value);
 
 async function submitOrder() {
-  const orderRes = await mallApi.createOrder({ addressId: addressId.value, payMethod: 'mock' });
+  const orderRes = await mallApi.createOrder({ addressId: addressId.value, userCouponId: userCouponId.value, payMethod: 'mock' });
   await mallApi.payOrder(orderRes.data.id);
   await cart.fetchCart();
   router.push('/user');
@@ -71,5 +97,7 @@ onMounted(async () => {
   const res = await mallApi.addresses();
   addresses.value = res.data;
   addressId.value = addresses.value[0]?.id || '';
+  const couponRes = await mallApi.userCoupons({ status: 0 });
+  userCoupons.value = couponRes.data;
 });
 </script>

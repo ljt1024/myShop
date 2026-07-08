@@ -48,6 +48,15 @@ export const store = {
       targetId: '3',
       sortOrder: 2,
       isShow: 1
+    },
+    {
+      id: 3,
+      title: '冷萃咖啡补给站',
+      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+      type: 'product',
+      targetId: '104',
+      sortOrder: 3,
+      isShow: 1
     }
   ],
   products: [
@@ -164,7 +173,44 @@ export const store = {
   orders: [],
   coupons: [
     { id: 1, name: '新人满 300 减 40', type: 1, value: 40, minAmount: 300, remainCount: 500, status: 1 },
-    { id: 2, name: '全场 95 折券', type: 2, value: 0.95, minAmount: 100, remainCount: 200, status: 1 }
+    { id: 2, name: '全场 95 折券', type: 2, value: 0.95, minAmount: 100, remainCount: 200, status: 1 },
+    { id: 3, name: '生活家居满 1500 减 180', type: 1, value: 180, minAmount: 1500, remainCount: 80, status: 1 }
+  ],
+  userCoupons: [
+    { id: 1, userId: 1, couponId: 1, orderId: null, status: 0, receivedAt: '2026-07-08 09:30:00', usedAt: null }
+  ],
+  favorites: [
+    { id: 1, userId: 1, productId: 101, createdAt: '2026-07-08 10:12:00' }
+  ],
+  reviews: [
+    {
+      id: 1,
+      productId: 101,
+      userId: 1,
+      orderId: 0,
+      skuId: 1001,
+      rating: 5,
+      content: '表盘清晰，运动记录很稳，续航比预期好。',
+      images: [],
+      isAnonymous: 0,
+      reply: '感谢支持，后续固件会继续优化运动算法。',
+      replyAt: '2026-07-08 12:00:00',
+      createdAt: '2026-07-08 11:00:00'
+    },
+    {
+      id: 2,
+      productId: 104,
+      userId: 1,
+      orderId: 0,
+      skuId: 1007,
+      rating: 4,
+      content: '冷萃口感干净，冰镇后更适合下午喝。',
+      images: [],
+      isAnonymous: 1,
+      reply: '',
+      replyAt: null,
+      createdAt: '2026-07-08 13:00:00'
+    }
   ]
 };
 
