@@ -1,0 +1,22 @@
+{
+  "name": "myshop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "B2C 电商商城 MVP：Vue 3 前台、Vue 3 管理后台、Express API。",
+  "workspaces": [
+    "backend",
+    "mall-web",
+    "admin-web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w backend",
+    "dev:api": "npm run dev -w backend",
+    "dev:mall": "npm run dev -w mall-web",
+    "dev:admin": "npm run dev -w admin-web",
+    "build": "npm run build -w mall-web && npm run build -w admin-web",
+    "lint": "npm run lint -w backend && npm run lint -w mall-web && npm run lint -w admin-web"
+  },
+  "engines": {
+    "node": ">=18.20"
+  }
+}
