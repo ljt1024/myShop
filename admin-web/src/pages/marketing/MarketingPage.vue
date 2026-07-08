@@ -5,7 +5,7 @@
         <span class="kicker">Coupons</span>
         <h2>优惠券管理</h2>
       </div>
-      <el-button type="primary" @click="drawer = true">创建优惠券</el-button>
+      <el-button type="primary" :disabled="!auth.canWrite" @click="drawer = true">创建优惠券</el-button>
     </div>
     <el-table :data="coupons" stripe>
       <el-table-column prop="name" label="名称" />
@@ -29,7 +29,7 @@
         <span class="kicker">Banners</span>
         <h2>首页 Banner</h2>
       </div>
-      <el-button type="primary" @click="openBannerEditor()">新增 Banner</el-button>
+      <el-button type="primary" :disabled="!auth.canWrite" @click="openBannerEditor()">新增 Banner</el-button>
     </div>
     <el-table :data="banners" stripe>
       <el-table-column label="图片" width="120">
@@ -48,11 +48,11 @@
       </el-table-column>
       <el-table-column label="操作" width="190" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openBannerEditor(row)">编辑</el-button>
-          <el-button link @click="toggleBanner(row)">{{ row.isShow ? '隐藏' : '展示' }}</el-button>
+          <el-button link type="primary" :disabled="!auth.canWrite" @click="openBannerEditor(row)">编辑</el-button>
+          <el-button link :disabled="!auth.canWrite" @click="toggleBanner(row)">{{ row.isShow ? '隐藏' : '展示' }}</el-button>
           <el-popconfirm title="确认删除该 Banner？" @confirm="removeBanner(row.id)">
             <template #reference>
-              <el-button link type="danger">删除</el-button>
+              <el-button link type="danger" :disabled="!auth.canWrite">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -84,7 +84,7 @@
     </el-form>
     <template #footer>
       <el-button @click="drawer = false">取消</el-button>
-      <el-button type="primary" @click="save">创建</el-button>
+      <el-button type="primary" :disabled="!auth.canWrite" @click="save">创建</el-button>
     </template>
   </el-drawer>
 
@@ -115,7 +115,7 @@
     </el-form>
     <template #footer>
       <el-button @click="bannerDrawer = false">取消</el-button>
-      <el-button type="primary" @click="saveBanner">保存</el-button>
+      <el-button type="primary" :disabled="!auth.canWrite" @click="saveBanner">保存</el-button>
     </template>
   </el-drawer>
 </template>
@@ -123,7 +123,9 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { adminApi } from '../../api/admin';
+import { useAdminAuthStore } from '../../stores/auth';
 
+const auth = useAdminAuthStore();
 const coupons = ref([]);
 const banners = ref([]);
 const drawer = ref(false);
@@ -150,6 +152,7 @@ async function fetchBanners() {
 }
 
 async function save() {
+  if (!auth.canWrite) return;
   await adminApi.createCoupon(form);
   Object.assign(form, { name: '', type: 1, value: 40, minAmount: 300, remainCount: 100 });
   drawer.value = false;
@@ -157,6 +160,7 @@ async function save() {
 }
 
 function openBannerEditor(row = null) {
+  if (!auth.canWrite) return;
   Object.assign(bannerForm, row || {
     id: '',
     title: '',
@@ -170,6 +174,7 @@ function openBannerEditor(row = null) {
 }
 
 async function saveBanner() {
+  if (!auth.canWrite) return;
   if (bannerForm.id) {
     await adminApi.updateBanner(bannerForm.id, bannerForm);
   } else {
@@ -180,11 +185,13 @@ async function saveBanner() {
 }
 
 async function toggleBanner(row) {
+  if (!auth.canWrite) return;
   await adminApi.updateBanner(row.id, { isShow: row.isShow ? 0 : 1 });
   await fetchBanners();
 }
 
 async function removeBanner(id) {
+  if (!auth.canWrite) return;
   await adminApi.deleteBanner(id);
   await fetchBanners();
 }

@@ -6,6 +6,7 @@ import ProductDetailPage from '../pages/product/ProductDetailPage.vue';
 import CartPage from '../pages/cart/CartPage.vue';
 import CheckoutPage from '../pages/order/CheckoutPage.vue';
 import UserCenterPage from '../pages/user/UserCenterPage.vue';
+import LoginPage from '../pages/auth/LoginPage.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,6 +18,7 @@ const router = createRouter({
         { path: '', name: 'home', component: HomePage },
         { path: 'products', name: 'products', component: ProductListPage },
         { path: 'products/:id', name: 'product-detail', component: ProductDetailPage },
+        { path: 'login', name: 'login', component: LoginPage },
         { path: 'cart', name: 'cart', component: CartPage, meta: { requiresAuth: true } },
         { path: 'checkout', name: 'checkout', component: CheckoutPage, meta: { requiresAuth: true } },
         { path: 'user', name: 'user', component: UserCenterPage, meta: { requiresAuth: true } }
@@ -28,7 +30,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (to.meta.requiresAuth && !localStorage.getItem('mall_token')) {
-    return { name: 'home', query: { login: '1', redirect: to.fullPath } };
+    return { name: 'login', query: { redirect: to.fullPath } };
   }
   return true;
 });

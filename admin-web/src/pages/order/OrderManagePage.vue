@@ -29,7 +29,7 @@
       <el-table-column prop="createdAt" label="创建时间" min-width="170" />
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
-          <el-button v-if="row.status === 20" type="primary" link @click="ship(row)">发货</el-button>
+          <el-button v-if="row.status === 20" type="primary" link :disabled="!auth.canWrite" @click="ship(row)">发货</el-button>
           <el-button v-else link disabled>无操作</el-button>
         </template>
       </el-table-column>
@@ -41,7 +41,9 @@
 import { onMounted, ref } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { adminApi } from '../../api/admin';
+import { useAdminAuthStore } from '../../stores/auth';
 
+const auth = useAdminAuthStore();
 const orders = ref([]);
 const status = ref('');
 const statusMap = { 10: '待支付', 20: '待发货', 30: '待收货', 40: '已完成', 50: '已取消' };
@@ -53,6 +55,7 @@ async function fetchOrders() {
 }
 
 async function ship(row) {
+  if (!auth.canWrite) return;
   const { value } = await ElMessageBox.prompt('请输入物流单号', '订单发货', {
     confirmButtonText: '发货',
     cancelButtonText: '取消',

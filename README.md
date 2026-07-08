@@ -25,12 +25,16 @@ npm run dev:admin
 
 演示账号：
 
-- 商城用户：手机号 `13800138000`，验证码 `123456`
+- 商城用户：账号 `demo`，密码 `demo123456`
+- 商城注册：自定义账号 + 密码，也支持忘记密码重置
 - 后台管理员：账号 `admin`，密码 `admin123456`
+- 后台运营：账号 `operator`，密码 `operator123456`
+- 后台游客：账号 `guest`，密码 `guest123456`，只读不可修改
 
 ## 已实现的 MVP 功能
 
 - 用户验证码登录、JWT 鉴权
+- 用户账号密码注册、登录、忘记密码重置
 - 首页轮播、分类入口、推荐商品
 - 商品列表、搜索、排序、商品详情、SKU 选择
 - 商品收藏、商品评价、商家回复展示
@@ -42,6 +46,7 @@ npm run dev:admin
 - 后台订单列表与发货
 - 后台用户启禁用、优惠券创建与列表
 - 后台首页 Banner 新增、编辑、展示/隐藏、删除
+- 后台 RBAC 角色权限：支持新增/编辑角色、配置权限、新增管理员、分配角色；游客只能查看，写接口后端强制拦截
 
 ## 数据库初始化
 
@@ -50,6 +55,8 @@ SQL 文件位于 `backend/migrations/`：
 ```bash
 mysql -uroot -p < backend/migrations/001_init_schema.sql
 mysql -uroot -p < backend/migrations/002_seed.sql
+mysql -uroot -p < backend/migrations/003_admin_rbac.sql
+mysql -uroot -p < backend/migrations/004_account_password_auth.sql
 ```
 
 当前 API 为便于前端联调使用内存数据；后续可将 `backend/src/models/store.js` 替换为 MySQL Repository 层。

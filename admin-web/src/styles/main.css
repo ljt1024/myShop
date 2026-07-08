@@ -114,6 +114,33 @@ a {
   color: var(--admin-muted);
 }
 
+.role-chip {
+  display: inline-grid;
+  min-height: 28px;
+  place-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #e8f5ef;
+  color: var(--admin-green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.role-chip.readonly {
+  background: #fff4df;
+  color: var(--admin-amber);
+}
+
+.readonly-banner {
+  margin: -8px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(189, 120, 30, 0.28);
+  border-radius: 8px;
+  background: #fff8eb;
+  color: #8a5a17;
+  font-weight: 700;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
@@ -245,8 +272,28 @@ a {
   color: var(--admin-muted);
 }
 
+.login-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.login-presets button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 800;
+}
+
 .login-panel .el-button {
   width: 100%;
+}
+
+.permission-tag {
+  margin: 3px 6px 3px 0;
 }
 
 @media (max-width: 980px) {

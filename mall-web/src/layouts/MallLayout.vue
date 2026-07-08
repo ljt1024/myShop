@@ -13,7 +13,7 @@
 
       <nav class="header-actions">
         <RouterLink to="/products">全部商品</RouterLink>
-        <button class="link-button" @click="quickLogin">
+        <button class="link-button" @click="goAccount">
           <UserRound :size="18" />
           <span>{{ auth.user?.nickname || '登录' }}</span>
         </button>
@@ -49,12 +49,8 @@ const auth = useAuthStore();
 const cart = useCartStore();
 const keyword = ref(route.query.keyword || '');
 
-async function quickLogin() {
-  if (!auth.isLoggedIn) {
-    await auth.login('13800138000', '123456');
-    await cart.fetchCart();
-  }
-  router.push('/user');
+function goAccount() {
+  router.push(auth.isLoggedIn ? '/user' : '/login');
 }
 
 function goSearch() {

@@ -7,7 +7,9 @@ export const useAdminAuthStore = defineStore('adminAuth', {
     admin: JSON.parse(localStorage.getItem('admin_user') || 'null')
   }),
   getters: {
-    isLoggedIn: (state) => Boolean(state.token)
+    isLoggedIn: (state) => Boolean(state.token),
+    canWrite: (state) => Boolean(state.admin?.permissions?.includes('write')),
+    canManageRoles: (state) => Boolean(state.admin?.permissions?.includes('role:manage'))
   },
   actions: {
     async login(payload) {

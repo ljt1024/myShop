@@ -4,7 +4,7 @@
       <el-input v-model="keyword" placeholder="搜索商品名称" clearable @keyup.enter="fetchProducts" />
       <div class="card-actions">
         <el-button @click="fetchProducts">查询</el-button>
-        <el-button type="primary" @click="openEditor()">新增商品</el-button>
+        <el-button type="primary" :disabled="!auth.canWrite" @click="openEditor()">新增商品</el-button>
       </div>
     </div>
 
@@ -32,11 +32,11 @@
       </el-table-column>
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEditor(row)">编辑</el-button>
-          <el-button link @click="toggleSale(row)">{{ row.isOnSale ? '下架' : '上架' }}</el-button>
+          <el-button link type="primary" :disabled="!auth.canWrite" @click="openEditor(row)">编辑</el-button>
+          <el-button link :disabled="!auth.canWrite" @click="toggleSale(row)">{{ row.isOnSale ? '下架' : '上架' }}</el-button>
           <el-popconfirm title="确认删除该商品？" @confirm="remove(row.id)">
             <template #reference>
-              <el-button link type="danger">删除</el-button>
+              <el-button link type="danger" :disabled="!auth.canWrite">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -87,7 +87,7 @@
     </el-form>
     <template #footer>
       <el-button @click="drawer = false">取消</el-button>
-      <el-button type="primary" @click="save">保存</el-button>
+      <el-button type="primary" :disabled="!auth.canWrite" @click="save">保存</el-button>
     </template>
   </el-drawer>
 </template>
@@ -96,7 +96,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { adminApi } from '../../api/admin';
+import { useAdminAuthStore } from '../../stores/auth';
 
+const auth = useAdminAuthStore();
 const products = ref([]);
 const keyword = ref('');
 const drawer = ref(false);
@@ -121,6 +123,7 @@ async function fetchProducts() {
 }
 
 function openEditor(row = null) {
+  if (!auth.canWrite) return;
   Object.assign(form, row || {
     id: '',
     name: '',
@@ -139,6 +142,7 @@ function openEditor(row = null) {
 }
 
 async function save() {
+  if (!auth.canWrite) return;
   if (form.id) {
     await adminApi.updateProduct(form.id, form);
   } else {
@@ -150,11 +154,13 @@ async function save() {
 }
 
 async function toggleSale(row) {
+  if (!auth.canWrite) return;
   await adminApi.updateProduct(row.id, { isOnSale: row.isOnSale ? 0 : 1 });
   await fetchProducts();
 }
 
 async function remove(id) {
+  if (!auth.canWrite) return;
   await adminApi.deleteProduct(id);
   await fetchProducts();
 }

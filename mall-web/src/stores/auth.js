@@ -10,12 +10,25 @@ export const useAuthStore = defineStore('mallAuth', {
     isLoggedIn: (state) => Boolean(state.token)
   },
   actions: {
-    async login(phone, code = '123456') {
-      const res = await mallApi.login({ phone, code });
+    async sendCode(phone) {
+      return mallApi.sendCode(phone);
+    },
+    async login(account, password) {
+      const res = await mallApi.login({ account, password });
       this.token = res.data.token;
       this.user = res.data.user;
       localStorage.setItem('mall_token', this.token);
       localStorage.setItem('mall_user', JSON.stringify(this.user));
+    },
+    async register(payload) {
+      const res = await mallApi.register(payload);
+      this.token = res.data.token;
+      this.user = res.data.user;
+      localStorage.setItem('mall_token', this.token);
+      localStorage.setItem('mall_user', JSON.stringify(this.user));
+    },
+    async forgotPassword(payload) {
+      return mallApi.forgotPassword(payload);
     },
     logout() {
       this.token = '';

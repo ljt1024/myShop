@@ -12,7 +12,7 @@
       </el-table-column>
       <el-table-column label="操作" width="130">
         <template #default="{ row }">
-          <el-button link type="primary" @click="toggle(row)">{{ row.status ? '禁用' : '启用' }}</el-button>
+          <el-button link type="primary" :disabled="!auth.canWrite" @click="toggle(row)">{{ row.status ? '禁用' : '启用' }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -22,7 +22,9 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { adminApi } from '../../api/admin';
+import { useAdminAuthStore } from '../../stores/auth';
 
+const auth = useAdminAuthStore();
 const users = ref([]);
 
 async function fetchUsers() {
@@ -31,6 +33,7 @@ async function fetchUsers() {
 }
 
 async function toggle(row) {
+  if (!auth.canWrite) return;
   await adminApi.toggleUser(row.id);
   await fetchUsers();
 }

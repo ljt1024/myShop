@@ -1,8 +1,55 @@
 export const store = {
+  roles: [
+    {
+      code: 'owner',
+      name: '超级管理员',
+      description: '拥有后台所有查看与修改权限',
+      permissions: ['read', 'write', 'role:manage']
+    },
+    {
+      code: 'operator',
+      name: '运营人员',
+      description: '可管理商品、订单、营销内容',
+      permissions: ['read', 'write']
+    },
+    {
+      code: 'viewer',
+      name: '游客',
+      description: '只能查看后台数据，不能新增、编辑、删除或发货',
+      permissions: ['read']
+    }
+  ],
+  admins: [
+    {
+      id: 1,
+      username: 'admin',
+      password: 'admin123456',
+      nickname: '商城运营管理员',
+      roleCode: 'owner',
+      status: 1
+    },
+    {
+      id: 2,
+      username: 'guest',
+      password: 'guest123456',
+      nickname: '只读游客',
+      roleCode: 'viewer',
+      status: 1
+    },
+    {
+      id: 3,
+      username: 'operator',
+      password: 'operator123456',
+      nickname: '运营人员',
+      roleCode: 'operator',
+      status: 1
+    }
+  ],
   users: [
     {
       id: 1,
       username: 'demo',
+      password: 'demo123456',
       phone: '13800138000',
       email: 'demo@myshop.local',
       nickname: '演示用户',

@@ -3,6 +3,8 @@ import { http } from './http';
 export const mallApi = {
   sendCode: (phone) => http.post('/auth/send-code', { phone }),
   login: (payload) => http.post('/auth/login', payload),
+  register: (payload) => http.post('/auth/register', payload),
+  forgotPassword: (payload) => http.post('/auth/forgot-password', payload),
   profile: () => http.get('/auth/info'),
   banners: () => http.get('/home/banners'),
   recommend: (limit = 8) => http.get('/home/recommend', { params: { limit } }),

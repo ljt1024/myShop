@@ -1,7 +1,7 @@
 import express from 'express';
 import { ok, page } from '../utils/response.js';
 import { requireAuth } from '../middlewares/auth.js';
-import { mallLogin, sendCode, getUserInfo } from '../services/authService.js';
+import { forgotPassword, mallLogin, mallRegister, sendCode, getUserInfo } from '../services/authService.js';
 import {
   getBanners,
   getCategories,
@@ -53,7 +53,15 @@ mallRouter.post('/auth/login', (req, res, next) => {
 
 mallRouter.post('/auth/register', (req, res, next) => {
   try {
-    res.json(ok(mallLogin(req.body), '注册成功'));
+    res.json(ok(mallRegister(req.body), '注册成功'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+mallRouter.post('/auth/forgot-password', (req, res, next) => {
+  try {
+    res.json(ok(forgotPassword(req.body), '密码已重置，请重新登录'));
   } catch (err) {
     next(err);
   }

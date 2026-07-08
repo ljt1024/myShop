@@ -16,5 +16,13 @@ export const adminApi = {
   banners: () => http.get('/banners'),
   createBanner: (payload) => http.post('/banners', payload),
   updateBanner: (id, payload) => http.put(`/banners/${id}`, payload),
-  deleteBanner: (id) => http.delete(`/banners/${id}`)
+  deleteBanner: (id) => http.delete(`/banners/${id}`),
+  roles: () => http.get('/roles'),
+  createRole: (payload) => http.post('/roles', payload),
+  updateRole: (code, payload) => http.put(`/roles/${code}`, payload),
+  deleteRole: (code) => http.delete(`/roles/${code}`),
+  admins: () => http.get('/admins'),
+  createAdmin: (payload) => http.post('/admins', payload),
+  updateAdmin: (id, payload) => http.put(`/admins/${id}`, payload),
+  deleteAdmin: (id) => http.delete(`/admins/${id}`)
 };

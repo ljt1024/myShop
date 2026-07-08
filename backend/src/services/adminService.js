@@ -75,7 +75,163 @@ export function deleteProduct(id) {
 }
 
 export function listUsers() {
-  return store.users;
+  return store.users.map(({ password, ...user }) => user);
+}
+
+export function listRoles() {
+  return store.roles;
+}
+
+export function createRole(payload) {
+  const code = String(payload.code || '').trim();
+  if (!code || !payload.name) {
+    const err = new Error('角色标识和名称不能为空');
+    err.status = 400;
+    throw err;
+  }
+
+  if (store.roles.some((item) => item.code === code)) {
+    const err = new Error('角色标识已存在');
+    err.status = 400;
+    throw err;
+  }
+
+  const role = {
+    code,
+    name: payload.name,
+    description: payload.description || '',
+    permissions: Array.isArray(payload.permissions) && payload.permissions.length ? payload.permissions : ['read']
+  };
+  store.roles.push(role);
+  return role;
+}
+
+export function updateRole(code, payload) {
+  const role = store.roles.find((item) => item.code === code);
+  if (!role) {
+    const err = new Error('角色不存在');
+    err.status = 404;
+    throw err;
+  }
+
+  Object.assign(role, {
+    code: role.code,
+    name: payload.name || role.name,
+    description: payload.description === undefined ? role.description : payload.description,
+    permissions: Array.isArray(payload.permissions) && payload.permissions.length ? payload.permissions : role.permissions
+  });
+  return role;
+}
+
+export function deleteRole(code) {
+  if (['owner', 'viewer'].includes(code)) {
+    const err = new Error('内置角色不可删除');
+    err.status = 400;
+    throw err;
+  }
+
+  if (store.admins.some((item) => item.roleCode === code)) {
+    const err = new Error('该角色已分配给管理员，不能删除');
+    err.status = 400;
+    throw err;
+  }
+
+  const index = store.roles.findIndex((item) => item.code === code);
+  if (index === -1) {
+    const err = new Error('角色不存在');
+    err.status = 404;
+    throw err;
+  }
+  store.roles.splice(index, 1);
+  return true;
+}
+
+export function listAdmins() {
+  return store.admins.map(({ password, ...admin }) => {
+    const role = store.roles.find((item) => item.code === admin.roleCode);
+    return {
+      ...admin,
+      roleName: role?.name || admin.roleCode,
+      permissions: role?.permissions || []
+    };
+  });
+}
+
+export function createAdmin(payload) {
+  if (!payload.username || !payload.password || !payload.roleCode) {
+    const err = new Error('管理员账号、密码和角色不能为空');
+    err.status = 400;
+    throw err;
+  }
+
+  if (store.admins.some((item) => item.username === payload.username)) {
+    const err = new Error('管理员账号已存在');
+    err.status = 400;
+    throw err;
+  }
+
+  if (!store.roles.some((item) => item.code === payload.roleCode)) {
+    const err = new Error('角色不存在');
+    err.status = 400;
+    throw err;
+  }
+
+  const admin = {
+    id: nextId(store.admins),
+    username: payload.username,
+    password: payload.password,
+    nickname: payload.nickname || payload.username,
+    roleCode: payload.roleCode,
+    status: payload.status === undefined ? 1 : Number(payload.status)
+  };
+  store.admins.push(admin);
+  return listAdmins().find((item) => item.id === admin.id);
+}
+
+export function updateAdmin(id, payload) {
+  const admin = store.admins.find((item) => item.id === Number(id));
+  if (!admin) {
+    const err = new Error('管理员不存在');
+    err.status = 404;
+    throw err;
+  }
+
+  if (payload.roleCode && !store.roles.some((item) => item.code === payload.roleCode)) {
+    const err = new Error('角色不存在');
+    err.status = 400;
+    throw err;
+  }
+
+  Object.assign(admin, {
+    id: admin.id,
+    username: payload.username || admin.username,
+    password: payload.password || admin.password,
+    nickname: payload.nickname === undefined ? admin.nickname : payload.nickname,
+    roleCode: payload.roleCode || admin.roleCode,
+    status: payload.status === undefined ? admin.status : Number(payload.status)
+  });
+  return listAdmins().find((item) => item.id === admin.id);
+}
+
+export function deleteAdmin(id) {
+  const admin = store.admins.find((item) => item.id === Number(id));
+  if (!admin) {
+    const err = new Error('管理员不存在');
+    err.status = 404;
+    throw err;
+  }
+
+  if (admin.roleCode === 'owner') {
+    const ownerCount = store.admins.filter((item) => item.roleCode === 'owner' && item.status).length;
+    if (ownerCount <= 1) {
+      const err = new Error('至少保留一个启用的超级管理员');
+      err.status = 400;
+      throw err;
+    }
+  }
+
+  store.admins = store.admins.filter((item) => item.id !== Number(id));
+  return true;
 }
 
 export function toggleUserStatus(id) {

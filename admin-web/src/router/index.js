@@ -6,6 +6,7 @@ import ProductManagePage from '../pages/product/ProductManagePage.vue';
 import OrderManagePage from '../pages/order/OrderManagePage.vue';
 import UserManagePage from '../pages/user/UserManagePage.vue';
 import MarketingPage from '../pages/marketing/MarketingPage.vue';
+import RoleManagePage from '../pages/system/RoleManagePage.vue';
 
 const router = createRouter({
   history: createWebHistory('/admin/'),
@@ -20,7 +21,8 @@ const router = createRouter({
         { path: 'products', name: 'products', component: ProductManagePage },
         { path: 'orders', name: 'orders', component: OrderManagePage },
         { path: 'users', name: 'users', component: UserManagePage },
-        { path: 'marketing', name: 'marketing', component: MarketingPage }
+        { path: 'marketing', name: 'marketing', component: MarketingPage },
+        { path: 'roles', name: 'roles', component: RoleManagePage }
       ]
     }
   ]

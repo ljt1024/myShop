@@ -125,12 +125,14 @@ const reviewForm = reactive({ rating: 5, content: '', isAnonymous: false });
 
 async function ensureLogin() {
   if (!auth.isLoggedIn) {
-    await auth.login('13800138000', '123456');
+    router.push({ path: '/login', query: { redirect: route.fullPath } });
+    return false;
   }
+  return true;
 }
 
 async function addToCart() {
-  await ensureLogin();
+  if (!(await ensureLogin())) return;
   await cart.add({ productId: product.value.id, skuId: selectedSku.value?.id, quantity: quantity.value });
 }
 
@@ -151,7 +153,7 @@ async function fetchFavoriteStatus() {
 }
 
 async function toggleFavorite() {
-  await ensureLogin();
+  if (!(await ensureLogin())) return;
   if (favorited.value) {
     await mallApi.removeFavoriteByProduct(product.value.id);
   } else {
@@ -161,7 +163,7 @@ async function toggleFavorite() {
 }
 
 async function submitReview() {
-  await ensureLogin();
+  if (!(await ensureLogin())) return;
   await mallApi.createReview(product.value.id, {
     rating: reviewForm.rating,
     content: reviewForm.content || '这件商品使用体验不错。',

@@ -32,3 +32,14 @@ export function requireAdmin(req, res, next) {
     next();
   });
 }
+
+export function requirePermission(permission) {
+  return (req, res, next) => {
+    const permissions = req.user?.permissions || [];
+    if (!permissions.includes(permission)) {
+      res.status(403).json(fail('当前角色没有修改权限，请使用管理员账号操作', 403));
+      return;
+    }
+    next();
+  };
+}

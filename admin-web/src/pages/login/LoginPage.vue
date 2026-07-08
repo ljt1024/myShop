@@ -4,7 +4,11 @@
       <div>
         <span class="kicker">MyShop Admin</span>
         <h1>登录运营后台</h1>
-        <p>演示账号：admin / admin123456</p>
+        <p>管理员：admin / admin123456；游客：guest / guest123456</p>
+        <div class="login-presets">
+          <button type="button" @click="usePreset('admin')">管理员登录</button>
+          <button type="button" @click="usePreset('guest')">游客登录</button>
+        </div>
       </div>
       <el-form :model="form" label-position="top" @submit.prevent="submit">
         <el-form-item label="账号">
@@ -28,6 +32,14 @@ const router = useRouter();
 const auth = useAdminAuthStore();
 const loading = ref(false);
 const form = reactive({ username: 'admin', password: 'admin123456' });
+
+function usePreset(type) {
+  if (type === 'guest') {
+    Object.assign(form, { username: 'guest', password: 'guest123456' });
+  } else {
+    Object.assign(form, { username: 'admin', password: 'admin123456' });
+  }
+}
 
 async function submit() {
   loading.value = true;
